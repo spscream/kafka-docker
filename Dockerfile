@@ -1,6 +1,6 @@
 FROM anapsix/alpine-java
 
-MAINTAINER Wurstmeister 
+MAINTAINER Wurstmeister
 
 RUN apk add --update unzip wget curl docker jq coreutils
 
@@ -14,6 +14,8 @@ ENV KAFKA_HOME /opt/kafka_${SCALA_VERSION}-${KAFKA_VERSION}
 ADD start-kafka.sh /usr/bin/start-kafka.sh
 ADD broker-list.sh /usr/bin/broker-list.sh
 ADD create-topics.sh /usr/bin/create-topics.sh
+
+EXPOSE 9092
 
 # Use "exec" form so that it runs as PID 1 (useful for graceful shutdown)
 CMD ["start-kafka.sh"]
