@@ -1,5 +1,27 @@
 #!/bin/bash
 
+# TODO:
+# This was tested on docker 1.11.1, check if it will work on another versions of docker
+# since it could be very specific to version of docker
+INSTANCE_ID="$(cat /proc/self/cgroup | grep "cpu:/" | sed 's/\([0-9]\):cpu:\/docker\///g' | cut -c 1-12)"
+INSTANCE_NAME="$(docker inspect --format "{{.Name}}" $INSTANCE_ID)"
+
+# Check if this container is started by docker-compose
+if [[ "$INSTANCE_NAME" =~ \/(.*)_([0-9]+) ]]; then
+  export COMPOSE_PROJECT_NAME= ${BASH_REMATCH[1]}
+  export KAFKA_BROKER_ID=${BASH_REMATCH[2]}
+  export KAFKA_LOG_DIRS="/kafka/kafka-logs-${KAFKA_BROKER_ID}"
+
+  BROKERS=( $(docker ps -f ancestor=${IMAGE_NAME} -f name=${COMPOSE_PROJECT_NAME} --format "{{.Names}},{{.ID}}") )
+  COMPOSE_CURRENT_SCALE=${#BROKERS[@]}
+else
+  BROKERS=( $(docker ps -f ancestor=${IMAGE_NAME} -f name=${INSTANCE_NAME} --format "{{.Names}},{{.ID}}") )
+
+  if [ -z $COMPOSE_CURRENT_SCALE ]; then
+    COMPOSE_CURRENT_SCALE=1
+  fi
+fi
+
 if [[ -z "$KAFKA_PORT" ]]; then
     export KAFKA_PORT=9092
 fi
@@ -60,8 +82,11 @@ term_handler() {
 
 # Capture kill requests to stop properly
 trap "term_handler" SIGHUP SIGINT SIGTERM
-create-topics.sh & 
+create-topics.sh &
 $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties &
 KAFKA_PID=$!
+
+# TODO:
+# Add auto-rebalance topics
 
 wait
