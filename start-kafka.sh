@@ -3,7 +3,8 @@
 # TODO:
 # This was tested on docker 1.11.1, check if it will work on another versions of docker
 # since it could be very specific to version of docker
-INSTANCE_ID="$(cat /proc/self/cgroup | grep "cpu:/" | sed 's/\([0-9]\):cpu:\/docker\///g' | cut -c 1-12)"
+#INSTANCE_ID="$(cat /proc/self/cgroup | grep "cpu:/" | sed 's/\([0-9]\):cpu:\/docker\///g' | cut -c 1-12)"
+INSTANCE_ID=$(hostname)
 INSTANCE_NAME="$(docker inspect --format "{{.Name}}" $INSTANCE_ID)"
 
 # Check if this container is started by docker-compose
